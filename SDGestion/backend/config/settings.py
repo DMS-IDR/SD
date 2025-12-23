@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     # Local
     'authentication',
     'reports',
+    'users',
 ]
 
 MIDDLEWARE = [

@@ -32,6 +32,7 @@ class SupabaseAuthentication(BaseAuthentication):
             
             # Get email from Supabase user
             email = user_data.user.email
+            supabase_user_id = user_data.user.id
             
             # Get or create local user to map to Django's auth system
             # We use the email as username since Supabase guarantees uniqueness there usually
@@ -42,7 +43,7 @@ class SupabaseAuthentication(BaseAuthentication):
                 # IMPORTANT: We must authenticate the request to bypass RLS policies
                 # that restrict access to "own profile only".
                 supabase.postgrest.auth(token)
-                profile_res = supabase.table('profiles').select('*').eq('id', user_data.user.id).single().execute()
+                profile_res = supabase.table('profiles').select('*').eq('id', supabase_user_id).single().execute()
                 
                 if profile_res.data:
                     user.company = profile_res.data.get('company')
@@ -57,7 +58,41 @@ class SupabaseAuthentication(BaseAuthentication):
                 user.company = None
                 user.role = None
             
+            # Fetch UserProfile from local database for permissions
+            try:
+                from users.models import UserProfile
+                user_profile = UserProfile.objects.get(supabase_user_id=supabase_user_id)
+                
+                # Attach permissions to request for easy access in views
+                request.user_profile = user_profile
+                request.user_role = user_profile.role
+                request.user_company = user_profile.company
+                request.user_permissions = {
+                    'can_view_reports': user_profile.can_view_reports,
+                    'can_view_user_management': user_profile.can_view_user_management,
+                }
+            except UserProfile.DoesNotExist:
+                # User exists in Supabase but not in local DB
+                # This is okay for now, they just won't have extended permissions
+                request.user_profile = None
+                request.user_role = getattr(user, 'role', None)
+                request.user_company = getattr(user, 'company', None)
+                request.user_permissions = {
+                    'can_view_reports': False,
+                    'can_view_user_management': False,
+                }
+            except Exception as e:
+                print(f"Error fetching UserProfile: {e}")
+                request.user_profile = None
+                request.user_role = None
+                request.user_company = None
+                request.user_permissions = {}
+            
+            # Also attach user_id for convenience
+            request.user_id = supabase_user_id
+            
             return (user, None)
             
         except Exception as e:
             raise AuthenticationFailed(f'Token validation error: {str(e)}')
+

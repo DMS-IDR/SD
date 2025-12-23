@@ -3,5 +3,7 @@ djangorestframework
 django-cors-headers
 supabase
 psycopg2-binary
+dj-database-url
 gunicorn
 python-dotenv
+boto3

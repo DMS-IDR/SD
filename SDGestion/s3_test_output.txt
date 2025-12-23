@@ -1,0 +1,38 @@
+============================================================
+AWS S3 Configuration Test
+============================================================
+
+Bucket Name: dkoreports
+Region: us-east-1
+Access Key ID: AKIA5RREKJ...
+
+Ô£ô S3 Client created successfully
+
+Listing objects in bucket 'dkoreports'...
+
+Ô£ô Found 10 objects (showing first 10):
+  - InformesDKo-MV/ (0 bytes)
+  - InformesDKo-MV/Agrupado MV20251222.xlsb (2491846 bytes)
+  - InformesDKo-MV/AgrupadoDko20250909.xlsb (45283487 bytes)
+  - InformesDKo-MV/AgrupadoDko20251005.xlsb (46131870 bytes)
+  - InformesDKo-MV/AgrupadoDko20251222.xlsb (49369979 bytes)
+  - InformesDKo-MV/CompletoDko20250909.xlsb (13378565 bytes)
+  - InformesDKo-MV/CompletoDko20251005.xlsb (13630225 bytes)
+  - InformesDKo-MV/CompletoDko20251017.xlsb (13722637 bytes)
+  - InformesDKo-MV/CompletoDko20251222.xlsb (15667498 bytes)
+  - InformesDKo-MV/Informe Ventas DKo20250909.xlsb (63498144 bytes)
+
+============================================================
+ReportFolder Configuration
+============================================================
+
+Found 1 configured folder(s):
+
+  Name: DKoHome
+  S3 Prefix: dkohome/Analisis Sucursales/
+  Company: Dko
+  Role Required: Admin
+
+============================================================
+Test Complete
+============================================================

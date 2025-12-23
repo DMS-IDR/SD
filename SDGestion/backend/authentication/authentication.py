@@ -37,6 +37,26 @@ class SupabaseAuthentication(BaseAuthentication):
             # We use the email as username since Supabase guarantees uniqueness there usually
             user, created = User.objects.get_or_create(username=email, defaults={'email': email})
             
+            # Fetch extra profile info from Supabase 'profiles' table
+            try:
+                # IMPORTANT: We must authenticate the request to bypass RLS policies
+                # that restrict access to "own profile only".
+                supabase.postgrest.auth(token)
+                profile_res = supabase.table('profiles').select('*').eq('id', user_data.user.id).single().execute()
+                
+                if profile_res.data:
+                    user.company = profile_res.data.get('company')
+                    user.role = profile_res.data.get('role')
+                else:
+                    # If data is empty (no permissions found or RLS blocking)
+                    print(f"No profile found for user {email}")
+                    user.company = None
+                    user.role = None
+            except Exception as profile_err:
+                print(f"Profile fetch error for {email}: {profile_err}")
+                user.company = None
+                user.role = None
+            
             return (user, None)
             
         except Exception as e:

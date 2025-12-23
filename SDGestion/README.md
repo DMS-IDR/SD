@@ -1,4 +1,4 @@
-# Sistema de Login (React + Django + Supabase + Docker)
+# SDGestion (React + Django + Supabase + Docker)
 
 Este proyecto es una aplicación web completa dockerizada requerida por el departamento.
 
@@ -28,7 +28,7 @@ Usamos **Supabase** como proveedor de identidad para simplificar la seguridad.
 ## 📂 Estructura del Proyecto
 
 ```text
-login-system/
+SDGestion/
 ├── docker-compose.yml      # El "Jefe de Obra". Define cómo levantar todo junto.
 ├── .env                    # Las llaves secretas (Supabase URL, Keys).
 │

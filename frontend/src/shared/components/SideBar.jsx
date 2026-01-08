@@ -1,11 +1,11 @@
 import { useState } from 'react'
 
 export const SideBar = ({ 
-    session = true, 
-    userPermissions = true, 
-    onSignOut = true,
-    navigate: navigateProp = true,
-    location: locationProp = true
+    session = null, 
+    userPermissions = null, 
+    onSignOut = null,
+    navigate: navigateProp = null,
+    location: locationProp = null
 }) => {
     const [collapsed, setCollapsed] = useState(true)
     
@@ -17,6 +17,11 @@ export const SideBar = ({
     const location = locationProp || { 
         pathname: window.location.pathname 
     }
+    
+    // Función por defecto para onSignOut si no se proporciona
+    const handleSignOut = onSignOut || (() => {
+        console.warn('onSignOut no está disponible')
+    })
 
     const menuItems = [
         {
@@ -123,8 +128,7 @@ export const SideBar = ({
             </nav>
 
             {/* User Info & Sign Out */}
-            {(session || onSignOut) && (
-                <div className="p-4 border-t border-slate-700">
+            <div className="p-4 border-t border-slate-700">
                     {!collapsed ? (
                         <div className="space-y-3">
                             {session?.user?.email && (
@@ -139,33 +143,28 @@ export const SideBar = ({
                                     )}
                                 </div>
                             )}
-                            {onSignOut && (
-                                <button
-                                    onClick={onSignOut}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                    Cerrar Sesión
-                                </button>
-                            )}
-                        </div>
-                    ) : (
-                        onSignOut && (
                             <button
-                                onClick={onSignOut}
-                                className="w-full p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                                title="Cerrar Sesión"
+                                onClick={handleSignOut}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                             >
-                                <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
+                                Cerrar Sesión
                             </button>
-                        )
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleSignOut}
+                            className="w-full p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                            title="Cerrar Sesión"
+                        >
+                            <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
                     )}
                 </div>
-            )}
         </div>
     )
 }

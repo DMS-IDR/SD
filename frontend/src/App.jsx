@@ -1,9 +1,9 @@
-import { MainLayout } from "./app/layouts";
+import { AuthLayout, MainLayout } from "./app/layouts";
 
 export default function App() {
     return (
         <>
-            <MainLayout />
+            <AuthLayout />
         </>
     );
 }

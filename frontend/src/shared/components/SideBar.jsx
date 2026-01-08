@@ -23,6 +23,9 @@ export const SideBar = ({
         console.warn('onSignOut no está disponible')
     })
 
+    // Si userPermissions es null, mostrar todos los items (modo desarrollo/demo)
+    const showAllItems = userPermissions === null
+
     const menuItems = [
         {
             id: 'home',

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getFromLocalStorage } from '../../shared/utils/localStorageManager';
+import { deleteLocalStorage, getFromLocalStorage } from '../../shared/utils/localStorageManager';
 import { supabase } from '../../shared/utils/clientSuperbase';
 
 const Authcontext = createContext(null);
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
     const logOut = () => {
         setUser(null);
-        localStorage.removeItem('token-sdgestion');
+        deleteLocalStorage();
     };
 
     // Mostrar loading mientras verifica la sesión

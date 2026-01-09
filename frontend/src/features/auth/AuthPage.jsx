@@ -1,8 +1,25 @@
+import { useState } from "react";
+import { useAuth } from "./hooks/useAuth";
+
 export const AuthPage = () => {
 
+    const { login } = useAuth();
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     
-    const handleLogin = (e) => {
+     
+    const handleLogin = async (e) => {
         e.preventDefault();
+
+        
+        try {
+            const executeLogin = await login('rodrigo.lunasp@gmail.com', '123');
+            console.log('inicio correcto')
+        } catch (error) {
+            console.log(error.message)
+        }
+
         
     }
 

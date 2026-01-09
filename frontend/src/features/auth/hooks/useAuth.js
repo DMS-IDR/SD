@@ -1,5 +1,5 @@
-import sdGestionApi from "../../../shared/utils/clientApi";
 import { supabase } from "../../../shared/utils/clientSuperbase";
+import { saveToLocalStorage } from "../../../shared/utils/localStorageManager";
 
 export const useAuth = () => {
 
@@ -11,8 +11,10 @@ export const useAuth = () => {
 
             if (error) throw  new Error(error.message);
 
-            // console.log(data);
-            
+            // console.log();
+
+            saveToLocalStorage('token-sdgestion', data.session.access_token )
+
             return data;
     }
 

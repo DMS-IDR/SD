@@ -18,7 +18,7 @@ export const AuthPage = () => {
 
         try {
             const executeLogin = await login(email, password);
-            console.log('inicio correcto')
+            console.log('inicio correcto');
         } catch (error) {
             console.log(error.message)
             setErrorLogin(true)
@@ -45,7 +45,7 @@ export const AuthPage = () => {
             <form onSubmit={handleLogin} className="space-y-6">
                 <div>
                     <label className="block text-slate-300 text-sm font-medium mb-2" htmlFor="email">
-                        Correo Electrónicoa
+                        Correo Electrónico
                     </label>
                     <input
                         id="email"

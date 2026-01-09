@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAuth } from '../../features/auth/hooks/useAuth'
 
 export const SideBar = ({ 
     session = null, 
@@ -9,6 +10,8 @@ export const SideBar = ({
 }) => {
     const [collapsed, setCollapsed] = useState(true)
     
+    const { logout } = useAuth();
+
     // Usar props si están disponibles, sino usar window.location como fallback
     const navigate = navigateProp || ((path) => {
         window.location.href = path
@@ -20,7 +23,7 @@ export const SideBar = ({
     
     // Función por defecto para onSignOut si no se proporciona
     const handleSignOut = onSignOut || (() => {
-        console.warn('onSignOut no está disponible')
+        logout();
     })
 
     // Si userPermissions es null, mostrar todos los items (modo desarrollo/demo)
@@ -35,7 +38,7 @@ export const SideBar = ({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
             ),
-            path: '/SD',
+            path: '/',
             visible: true
         },
         {

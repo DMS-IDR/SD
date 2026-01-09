@@ -1,3 +1,4 @@
+import { Outlet } from "react-router-dom"
 import { AuthPage } from "../../features/auth/AuthPage"
 
 export const AuthLayout = () => {
@@ -13,7 +14,7 @@ export const AuthLayout = () => {
                     <p className="text-slate-400 text-sm">Ingresa tus credenciales para acceder al sistema</p>
                 </div>
 
-                <AuthPage />
+                <Outlet />
 
             </div>
         </div>

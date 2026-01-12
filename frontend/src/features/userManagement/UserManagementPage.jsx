@@ -1,41 +1,45 @@
+import { useState } from "react";
 
 export const UserManagementPage = () => {
 
-    const users = [
-        {
-            id: "1",
-            email: "admin@empresa.com",
-            company: "Tech Solutions",
-            role: "Admin",
-            can_view_reports: true,
-            can_view_user_management: true,
-            can_view_closing_sales: true,
-            can_view_commission: true,
-            is_active: true
-        },
-        {
-            id: "2",
-            email: "vendedor@empresa.com",
-            company: "Tech Solutions",
-            role: "Vendedor",
-            can_view_reports: false,
-            can_view_user_management: false,
-            can_view_closing_sales: true,
-            can_view_commission: true,
-            is_active: true
-        },
-        {
-            id: "3",
-            email: "invitado@empresa.com",
-            company: "Partner S.A.",
-            role: "Invitado",
-            can_view_reports: true,
-            can_view_user_management: false,
-            can_view_closing_sales: false,
-            can_view_commission: false,
-            is_active: false
-        }
-    ];
+    // const users = [
+    //     {
+    //         id: "1",
+    //         email: "admin@empresa.com",
+    //         company: "Tech Solutions",
+    //         role: "Admin",
+    //         can_view_reports: true,
+    //         can_view_user_management: true,
+    //         can_view_closing_sales: true,
+    //         can_view_commission: true,
+    //         is_active: true
+    //     },
+    //     {
+    //         id: "2",
+    //         email: "vendedor@empresa.com",
+    //         company: "Tech Solutions",
+    //         role: "Vendedor",
+    //         can_view_reports: false,
+    //         can_view_user_management: false,
+    //         can_view_closing_sales: true,
+    //         can_view_commission: true,
+    //         is_active: true
+    //     },
+    //     {
+    //         id: "3",
+    //         email: "invitado@empresa.com",
+    //         company: "Partner S.A.",
+    //         role: "Invitado",
+    //         can_view_reports: true,
+    //         can_view_user_management: false,
+    //         can_view_closing_sales: false,
+    //         can_view_commission: false,
+    //         is_active: false
+    //     }
+    // ];
+
+    const [users, setUsers] = useState([]);
+
 
 
     return (

@@ -33,6 +33,17 @@ export const UserManagementPage = () => {
         )
     }
 
+    const handleTogglePermission = async (userId, permission, value) => {
+        try {
+            await editUser({
+                id: userId,
+                userData: { [permission]: !value }
+            });
+        } catch (error) {
+            console.error(`Error toggling ${permission}:`, error);
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto p-4 sm:p-6">
             <div className="mb-8 flex justify-between items-end">

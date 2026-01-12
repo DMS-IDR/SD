@@ -84,6 +84,7 @@ class UserListCreateView(APIView):
                 can_view_reports=serializer.validated_data.get('can_view_reports', True),
                 can_view_user_management=serializer.validated_data.get('can_view_user_management', False),
                 can_view_closing_sales=serializer.validated_data.get('can_view_closing_sales', False),
+                can_view_commission=serializer.validated_data.get('can_view_commission', False),
             )
             
             # Also create/update profile in Supabase public.profiles table
@@ -142,6 +143,10 @@ class UserDetailView(APIView):
                 user.can_view_user_management = request.data['can_view_user_management']
             if 'is_active' in request.data:
                 user.is_active = request.data['is_active']
+            if 'can_view_closing_sales' in request.data:
+                user.can_view_closing_sales = request.data['can_view_closing_sales']
+            if 'can_view_commission' in request.data:
+                user.can_view_commission = request.data['can_view_commission']
             
             user.save()
             

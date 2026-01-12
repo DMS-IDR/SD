@@ -1,38 +1,59 @@
-import sdGestionApi from "../../../shared/utils/clientApi"
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import sdGestionApi from "../../../shared/utils/clientApi";
 
 export const useUserManagement = () => {
+    const queryClient = useQueryClient();
 
-    const getAllUser = async () => {
-        try {
+    // Query to fetch all users
+    const usersQuery = useQuery({
+        queryKey: ['users'],
+        queryFn: async () => {
             const { data } = await sdGestionApi.get('/api/users');
-        } catch (error) {
-            console.log('getAllUser', error);  
+            return data;
+        },
+    });
+
+    // Mutation to create a user
+    const createUserMutation = useMutation({
+        mutationFn: async (userData) => {
+            const { data } = await sdGestionApi.post('/api/users/', userData);
+            return data;
+        },
+        onSuccess: () => {
+            // Invalidate and refetch users query to update the list
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+        },
+        onError: (error) => {
+            console.error('Error creating user:', error);
         }
-    }
+    });
 
-    const createUser = async (data) => {
-        try {
-            const { data } = await sdGestionApi.post('api/users/', data);
-            console.log(data)
-        } catch (error) {
-            console.log('error: ', error)
+    // Mutation to edit a user
+    const editUserMutation = useMutation({
+        mutationFn: async ({ id, userData }) => {
+            const { data } = await sdGestionApi.put(`/api/users/${id}/`, userData);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+        },
+        onError: (error) => {
+            console.error('Error editing user:', error);
         }
-    }
+    });
 
-    const editUser = async (userId) => {
-        try {
-            const { data } = await sdGestionApi.put(`/api/users/${user.id}`);
-            console.log(data)
-        } catch (error) {
-            console.log('editUser: ', error)
-        }
-    }
+    return {
+        // Properties for the UI
+        users: usersQuery.data,
+        isLoading: usersQuery.isLoading,
+        isError: usersQuery.isError,
+        error: usersQuery.error,
 
-    return (
-        getAllUser,
-        createUser,
-        editUser
-    )
+        // Actions
+        createUser: createUserMutation.mutateAsync,
+        isCreating: createUserMutation.isPending,
 
-}
+        editUser: editUserMutation.mutateAsync,
+        isEditing: editUserMutation.isPending
+    };
+};

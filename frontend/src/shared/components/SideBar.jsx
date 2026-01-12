@@ -139,9 +139,9 @@ export const SideBar = ({
             <div className="p-4 border-t border-slate-700">
                 {!collapsed ? (
                     <div className="space-y-3">
-                        {session?.user?.email && (
+                        {user?.email && (
                             <div className="text-xs text-slate-500">
-                                <div className="font-medium text-slate-300 truncate">{session.user.email}</div>
+                                <div className="font-medium text-slate-300 truncate">{user?.email}</div>
                                 {userPermissions?.role && (
                                     <div className="mt-1">
                                         <span className="inline-block px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-xs">

@@ -18,6 +18,8 @@ export const useAuth = () => {
 
         saveToLocalStorage('token-sdgestion', data.session.access_token)
 
+        console.log(data)
+
         // Actualizar el contexto global con los datos del usuario
         setUser({
             id: data.user.id,

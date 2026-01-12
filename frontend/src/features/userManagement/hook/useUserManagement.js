@@ -24,6 +24,7 @@ export const useUserManagement = () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
         },
         onError: (error) => {
+            console.log(error.response.data)
             console.error('Error creating user:', error);
         }
     });
@@ -31,7 +32,9 @@ export const useUserManagement = () => {
     // Mutation to edit a user
     const editUserMutation = useMutation({
         mutationFn: async ({ id, userData }) => {
+            console.log('userData', userData)
             const { data } = await sdGestionApi.put(`/api/users/${id}/`, userData);
+            console.log('data', data)
             return data;
         },
         onSuccess: () => {

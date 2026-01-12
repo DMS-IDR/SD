@@ -1,30 +1,29 @@
 import { useState, useEffect } from "react";
 import { useUserManagement } from "./hook/useUserManagement";
+import { ModalCreateUser } from "./components/ModalCreateUser";
+import { ModalEditUser } from "./components/ModalEditUser";
 
 export const UserManagementPage = () => {
-    const { users = [], isLoading, isError } = useUserManagement();
-
-    useEffect(() => {
-        if (!isLoading) {
-            console.log("Usuarios cargados:", users);
-        }
-    }, [users, isLoading]);
-
-
-    // State for modals or other UI elements can remain here
-    // const [showCreateModal, setShowCreateModal] = useState(false);
-    // const [editingUser, setEditingUser] = useState(null);
+    const { users = [], isLoading, isError, createUser, isCreating, editUser } = useUserManagement();
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
 
 
 
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-white text-xl">Cargando usuarios...</div>
-            </div>
-        )
-    }
+    // useEffect(() => {
+    //     if (!isLoading) {
+    //         console.log("Usuarios cargados:", users);
+    //     }
+    // }, [users, isLoading]);
+
+    // if (isLoading) {
+    //     return (
+    //         <div className="flex items-center justify-center min-h-[400px]">
+    //             <div className="text-white text-xl">Cargando usuarios...</div>
+    //         </div>
+    //     )
+    // }
 
     if (isError) {
         return (
@@ -44,7 +43,7 @@ export const UserManagementPage = () => {
                     <p className="text-slate-400 mt-2">Gestionar usuarios, roles y permisos</p>
                 </div>
                 <button
-                    // onClick={() => setShowCreateModal(true)}
+                    onClick={() => setShowCreateModal(true)}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +167,16 @@ export const UserManagementPage = () => {
                 </div>
             </div>
 
+            <ModalCreateUser
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+            />
 
+            <ModalEditUser
+                userToEdit={editingUser}
+                isOpen={!!editingUser}
+                onClose={() => setEditingUser(null)}
+            />
         </div>
     )
 }

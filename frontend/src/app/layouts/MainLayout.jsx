@@ -1,3 +1,4 @@
+import { Outlet } from "react-router-dom"
 import { SideBar } from "../../shared/components"
 
 const userPermissions = {
@@ -14,7 +15,7 @@ export const MainLayout = () => {
             <SideBar userPermissions={userPermissions} />
 
             <main className="flex-1 overflow-y-auto p-2">
-                Main Content
+                <Outlet/>
             </main>
 
         </div>

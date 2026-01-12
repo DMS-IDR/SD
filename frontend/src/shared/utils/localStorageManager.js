@@ -1,13 +1,21 @@
 
 
 export const saveToLocalStorage = (key, data) => {
-    const serializedValue = JSON.stringify(data);
-    localStorage.setItem(key, serializedValue);
+    if (typeof data === 'string') {
+        localStorage.setItem(key, data);
+    } else {
+        const serializedValue = JSON.stringify(data);
+        localStorage.setItem(key, serializedValue);
+    }
 }
 
 export const getFromLocalStorage = (key) => {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
+    try {
+        return item ? JSON.parse(item) : null;
+    } catch (e) {
+        return item;
+    }
 }
 
 export const deleteLocalStorage = () => {

@@ -10,21 +10,6 @@ export const UserManagementPage = () => {
 
 
 
-
-    // useEffect(() => {
-    //     if (!isLoading) {
-    //         console.log("Usuarios cargados:", users);
-    //     }
-    // }, [users, isLoading]);
-
-    // if (isLoading) {
-    //     return (
-    //         <div className="flex items-center justify-center min-h-[400px]">
-    //             <div className="text-white text-xl">Cargando usuarios...</div>
-    //         </div>
-    //     )
-    // }
-
     if (isError) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">

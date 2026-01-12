@@ -1,33 +1,35 @@
 import { useState } from 'react'
-import { useAuth } from '../../features/auth/hooks/useAuth'
+import { useAuth } from '../../app/context/AuthContext';
 
-export const SideBar = ({ 
-    session = null, 
-    userPermissions = null, 
+export const SideBar = ({
+    session = null,
+    userPermissions = null,
     onSignOut = null,
     navigate: navigateProp = null,
     location: locationProp = null
 }) => {
     const [collapsed, setCollapsed] = useState(true)
-    
-    const { logout } = useAuth();
+
+    const { logOut, user } = useAuth();
+
+    console.log(user)
 
     // Usar props si están disponibles, sino usar window.location como fallback
     const navigate = navigateProp || ((path) => {
         window.location.href = path
     })
-    
-    const location = locationProp || { 
-        pathname: window.location.pathname 
+
+    const location = locationProp || {
+        pathname: window.location.pathname
     }
-    
+
     // Función por defecto para onSignOut si no se proporciona
     const handleSignOut = onSignOut || (() => {
-        logout();
+        logOut();
     })
 
     // Si userPermissions es null, mostrar todos los items (modo desarrollo/demo)
-    const showAllItems = userPermissions === null
+    const showAllItems = user.privileges === null
 
     const menuItems = [
         {
@@ -50,7 +52,7 @@ export const SideBar = ({
                 </svg>
             ),
             path: '/reports',
-            visible: userPermissions?.can_view_reports || false
+            visible: user.privileges?.can_view_reports || false
         },
         {
             id: 'users',
@@ -61,7 +63,7 @@ export const SideBar = ({
                 </svg>
             ),
             path: '/users',
-            visible: userPermissions?.can_view_user_management || false
+            visible: user.privileges?.can_view_user_management || false
         },
         {
             id: 'closing-sales',
@@ -72,7 +74,7 @@ export const SideBar = ({
                 </svg>
             ),
             path: '/closing-sales',
-            visible: userPermissions?.can_view_closing_sales || false
+            visible: user.privileges?.can_view_closing_sales || false
         },
         {
             id: 'commissions',
@@ -83,7 +85,7 @@ export const SideBar = ({
                 </svg>
             ),
             path: '/commissions',
-            visible: userPermissions?.can_view_commission || false
+            visible: user.privileges?.can_view_commission || false
         }
     ]
 
@@ -135,42 +137,42 @@ export const SideBar = ({
 
             {/* User Info & Sign Out */}
             <div className="p-4 border-t border-slate-700">
-                    {!collapsed ? (
-                        <div className="space-y-3">
-                            {session?.user?.email && (
-                                <div className="text-xs text-slate-500">
-                                    <div className="font-medium text-slate-300 truncate">{session.user.email}</div>
-                                    {userPermissions?.role && (
-                                        <div className="mt-1">
-                                            <span className="inline-block px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-xs">
-                                                {userPermissions.role}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            <button
-                                onClick={handleSignOut}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Cerrar Sesión
-                            </button>
-                        </div>
-                    ) : (
+                {!collapsed ? (
+                    <div className="space-y-3">
+                        {session?.user?.email && (
+                            <div className="text-xs text-slate-500">
+                                <div className="font-medium text-slate-300 truncate">{session.user.email}</div>
+                                {userPermissions?.role && (
+                                    <div className="mt-1">
+                                        <span className="inline-block px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-xs">
+                                            {userPermissions.role}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <button
                             onClick={handleSignOut}
-                            className="w-full p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                            title="Cerrar Sesión"
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                         >
-                            <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
+                            Cerrar Sesión
                         </button>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleSignOut}
+                        className="w-full p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                        title="Cerrar Sesión"
+                    >
+                        <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                )}
+            </div>
         </div>
     )
 }

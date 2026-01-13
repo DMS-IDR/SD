@@ -77,14 +77,9 @@ export const ModalEditUser = ({ isOpen, onClose, userToEdit }) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                        <input
-                            type="email"
-                            name="email"
-                            required
-                            value={editUser.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                        />
+                        <p className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-400 select-none">
+                            {editUser.email}
+                        </p>
                     </div>
 
 

@@ -11,13 +11,12 @@ sdGestionApi.interceptors.request.use(
         // TODO: al momento de hacer login se debe solo guardar token en LS
         const token = localStorage.getItem('token-sdgestion')
 
-        if(token) {
-            console.log(token)
+        if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
 
         return config;
-    }, 
+    },
     (error) => {
         return Promise.reject(error);
     }

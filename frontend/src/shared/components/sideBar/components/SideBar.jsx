@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useAuth } from '../../app/context/AuthContext';
+import { useAuth } from '../../../../app/context/AuthContext';
 
 export const SideBar = ({
     session = null,
-    userPermissions = null,
+    // userPermissions = null,
     onSignOut = null,
     navigate: navigateProp = null,
     location: locationProp = null
@@ -12,7 +12,14 @@ export const SideBar = ({
 
     const { logOut, user } = useAuth();
 
-    console.log(user)
+    console.log('sideBar userdata: ', user)
+
+    const userPermissions = {
+        can_view_reports: false,
+        can_view_user_management: false,
+        can_view_closing_sales: false,
+        can_view_commission: false
+    }
 
     // Usar props si están disponibles, sino usar window.location como fallback
     const navigate = navigateProp || ((path) => {
@@ -93,7 +100,7 @@ export const SideBar = ({
 
     return (
         <div className={`bg-slate-900 border-r border-slate-700 flex flex-col transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'}`}>
-            {/* Header */}
+            {/* Header (logo, nombre de la app, boton de collapse) */}
             <div className="p-4 border-b border-slate-700 flex items-center justify-between">
                 {!collapsed && (
                     <div className="flex items-center gap-2">
@@ -113,7 +120,7 @@ export const SideBar = ({
                 </button>
             </div>
 
-            {/* Navigation */}
+            {/* Navigation (menu items) */}
             <nav className="flex-1 p-4 space-y-2">
                 {visibleItems.map(item => {
                     const isActive = location.pathname === item.path
@@ -135,17 +142,17 @@ export const SideBar = ({
                 })}
             </nav>
 
-            {/* User Info & Sign Out */}
+            {/* User Info & Sign Out (nombre de usuario, rol, boton de cerrar sesion)*/}
             <div className="p-4 border-t border-slate-700">
                 {!collapsed ? (
                     <div className="space-y-3">
                         {user?.email && (
                             <div className="text-xs text-slate-500">
                                 <div className="font-medium text-slate-300 truncate">{user?.email}</div>
-                                {userPermissions?.role && (
+                                {user?.rol && (
                                     <div className="mt-1">
                                         <span className="inline-block px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-xs">
-                                            {userPermissions.role}
+                                            {user.rol}
                                         </span>
                                     </div>
                                 )}

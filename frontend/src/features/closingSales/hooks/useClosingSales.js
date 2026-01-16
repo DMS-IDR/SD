@@ -20,3 +20,27 @@ export const useCashes = (entity) => {
         error: cashesQuery.error,
     };
 };
+
+export const useClosingSalesInfo = (params) => {
+    const infoQuery = useQuery({
+        queryKey: ['closing-sale-info', params],
+        queryFn: async () => {
+            const searchParams = new URLSearchParams();
+            if (params.date) searchParams.append('date', params.date);
+            if (params.entity) searchParams.append('entity', params.entity);
+            if (params.channel) searchParams.append('channel', params.channel);
+            if (params.cash) searchParams.append('cash', params.cash);
+
+            const { data } = await sdGestionApi.get(`/closing-sale/info?${searchParams.toString()}`);
+            return data.data; // Correctly extract the array from { message, data, error }
+        },
+        enabled: !!(params.date && params.entity && params.channel && params.cash),
+    });
+
+    return {
+        info: infoQuery.data || EMPTY_ARRAY,
+        isLoading: infoQuery.isLoading,
+        isError: infoQuery.isError,
+        error: infoQuery.error,
+    };
+};

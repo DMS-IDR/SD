@@ -4,6 +4,7 @@ import { AuthPage } from '../../features/auth/AuthPage';
 import { HomePage } from '../../features/home/HomePage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { UserManagementPage } from '../../features/userManagement/UserManagementPage';
+import { ClosingSalesPage } from '../../features/closingSales/ClosingSalesPage';
 
 const AppRouter = () => {
     return (
@@ -17,10 +18,11 @@ const AppRouter = () => {
                 </Route>
 
                 {/* Rutas privadas */}
-                <Route element={<ProtectedRoute/>}>
+                <Route element={<ProtectedRoute />}>
                     <Route element={<MainLayout />}>
                         <Route path='/' element={<HomePage />} />
-                        <Route path='/users' element={<UserManagementPage/>} />
+                        <Route path='/users' element={<UserManagementPage />} />
+                        <Route path='/closing-sales' element={<ClosingSalesPage />} />
                     </Route>
                 </Route>
 

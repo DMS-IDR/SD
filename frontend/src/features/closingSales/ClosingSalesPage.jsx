@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useCashes } from "./hooks/useClosingSales"
 
 const COMPANIES = [
     { id: '1', name: 'DKO' },
@@ -15,11 +16,25 @@ export const ClosingSalesPage = () => {
     const [error, setError] = useState(null)
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
     const [entity, setEntity] = useState('1')
-    const [cashes, setCashes] = useState([])
     const [selectedChannels, setSelectedChannels] = useState(['Pos', 'Web', 'Ventas'])
     const [selectedCashes, setSelectedCashes] = useState([])
-    const [closingData, setClosingData] = useState(null)
+    const [closingData, setClosingData] = useState(false)
     const [cashDropdownOpen, setCashDropdownOpen] = useState(false)
+
+    // TanStack Query Hook: Fetch cashes whenever 'entity' changes
+    const { cashes, isLoading: loadingCashes } = useCashes(entity)
+
+    // Sync selectedCashes ONLY when new cash data is loaded from the query
+    useEffect(() => {
+        if (cashes && cashes.length > 0) {
+            const cashesNames = cashes.map(c => c.caja);
+            // Only update if the selection is different from the total available
+            // to avoid loop if this effect triggers unnecessarily
+            setSelectedCashes(cashesNames);
+        } else {
+            setSelectedCashes([]);
+        }
+    }, [cashes])
 
     const selectAllCashes = () => setSelectedCashes(cashes.map(c => c.caja))
     const deselectAllCashes = () => setSelectedCashes([])
@@ -30,6 +45,19 @@ export const ClosingSalesPage = () => {
 
     }
 
+    const toggleChannel = (channel) => {
+        setSelectedChannels(prev =>
+            prev.includes(channel) ? prev.filter(c => c !== channel) : [...prev, channel]
+        )
+    }
+
+    const toggleCash = (cash) => {
+        setSelectedCashes(prev =>
+            prev.includes(cash) ? prev.filter(c => c !== cash) : [...prev, cash]
+        )
+    }
+
+    const exportToPDF = () => { }
 
     return (
         <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -99,18 +127,28 @@ export const ClosingSalesPage = () => {
                                 <button onClick={deselectAllCashes} className="text-xs text-slate-500 hover:underline">Ninguna</button>
                             </div>
                             <div className="flex flex-wrap gap-1">
-                                {cashes.map(c => (
-                                    <button
-                                        key={c.caja}
-                                        onClick={() => toggleCash(c.caja)}
-                                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${selectedCashes.includes(c.caja)
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                                            }`}
-                                    >
-                                        {c.caja}
-                                    </button>
-                                ))}
+                                {loadingCashes ? (
+                                    <div className="px-2 py-1 rounded text-xs font-medium bg-slate-700/50 text-slate-400 animate-pulse">
+                                        Cargando cajas...
+                                    </div>
+                                ) : cashes.length > 0 ? (
+                                    cashes.map(c => (
+                                        <button
+                                            key={c.caja}
+                                            onClick={() => toggleCash(c.caja)}
+                                            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${selectedCashes.includes(c.caja)
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                                }`}
+                                        >
+                                            {c.caja}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="px-2 py-1 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                                        Sin cajas disponibles
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

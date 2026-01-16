@@ -67,6 +67,9 @@ export default function ClosingSalesView({ session }) {
                 cash: selectedCashes.join(',')
             })
 
+
+            console.log('params', params)
+
             const res = await fetch(`http://localhost:8000/api/closingsales/info/?${params}`, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             })

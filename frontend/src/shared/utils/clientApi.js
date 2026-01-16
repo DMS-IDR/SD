@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const sdGestionApi = axios.create({
-    baseURL: import.meta.env.VITE_API_BACKEND_URL
+    // baseURL: import.meta.env.VITE_API_BACKEND_URL
+    baseURL: 'http://localhost:3000/api'
 })
 
 // Interceptor de request

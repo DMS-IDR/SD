@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../../../app/context/AuthContext';
 
 export const SideBar = ({
     session = null,
     // userPermissions = null,
     onSignOut = null,
-    navigate: navigateProp = null,
     location: locationProp = null
 }) => {
     const [collapsed, setCollapsed] = useState(true)
@@ -22,9 +22,6 @@ export const SideBar = ({
     }
 
     // Usar props si están disponibles, sino usar window.location como fallback
-    const navigate = navigateProp || ((path) => {
-        window.location.href = path
-    })
 
     const location = locationProp || {
         pathname: window.location.pathname
@@ -126,9 +123,9 @@ export const SideBar = ({
                     const isActive = location.pathname === item.path
 
                     return (
-                        <button
+                        <Link
                             key={item.id}
-                            onClick={() => navigate(item.path)}
+                            to={item.path}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
                                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -137,7 +134,7 @@ export const SideBar = ({
                         >
                             {item.icon}
                             {!collapsed && <span className="font-medium">{item.name}</span>}
-                        </button>
+                        </Link>
                     )
                 })}
             </nav>

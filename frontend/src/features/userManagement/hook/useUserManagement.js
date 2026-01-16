@@ -8,7 +8,8 @@ export const useUserManagement = () => {
     const usersQuery = useQuery({
         queryKey: ['users'],
         queryFn: async () => {
-            const { data } = await sdGestionApi.get('/api/users');
+            const { data } = await sdGestionApi.get('/users');
+            console.log('data', data)
             return data;
         },
     });
@@ -16,7 +17,7 @@ export const useUserManagement = () => {
     // Mutation to create a user
     const createUserMutation = useMutation({
         mutationFn: async (userData) => {
-            const { data } = await sdGestionApi.post('/api/users/', userData);
+            const { data } = await sdGestionApi.post('/users', userData);
             return data;
         },
         onSuccess: () => {
@@ -33,7 +34,7 @@ export const useUserManagement = () => {
     const editUserMutation = useMutation({
         mutationFn: async ({ id, userData }) => {
             console.log('userData', userData)
-            const { data } = await sdGestionApi.put(`/api/users/${id}/`, userData);
+            const { data } = await sdGestionApi.patch(`/users/${id}`, userData);
             console.log('data', data)
             return data;
         },
@@ -45,9 +46,23 @@ export const useUserManagement = () => {
         }
     });
 
+    // Mutation to delete a user
+    const deleteUserMutation = useMutation({
+        mutationFn: async (id) => {
+            const { data } = await sdGestionApi.delete(`/users/${id}`);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+        },
+        onError: (error) => {
+            console.error('Error deleting user:', error);
+        }
+    });
+
     return {
         // Properties for the UI
-        users: usersQuery.data,
+        users: usersQuery.data?.data?.users || [],
         isLoading: usersQuery.isLoading,
         isError: usersQuery.isError,
         error: usersQuery.error,
@@ -57,6 +72,9 @@ export const useUserManagement = () => {
         isCreating: createUserMutation.isPending,
 
         editUser: editUserMutation.mutateAsync,
-        isEditing: editUserMutation.isPending
+        isEditing: editUserMutation.isPending,
+
+        deleteUser: deleteUserMutation.mutateAsync,
+        isDeleting: deleteUserMutation.isPending
     };
 };

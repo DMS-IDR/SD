@@ -2,22 +2,52 @@ import { useQuery } from '@tanstack/react-query';
 import sdGestionApi from "../../../shared/utils/clientApi";
 
 const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 
 export const useCashes = (entity) => {
     const cashesQuery = useQuery({
         queryKey: ['cashes', entity],
         queryFn: async () => {
             const { data } = await sdGestionApi.get(`/closing-sale/cashes?entity=${entity}`);
-            return data.data; // Correctly extract the array from { message, data, error }
+            console.log(`API Cashes for entity ${entity}:`, data);
+            return data;
         },
         enabled: !!entity,
     });
 
+    const rawData = cashesQuery.data;
+    const cashes = Array.isArray(rawData)
+        ? rawData
+        : (Array.isArray(rawData?.data) ? rawData.data : EMPTY_ARRAY);
+
     return {
-        cashes: cashesQuery.data || EMPTY_ARRAY,
+        cashes,
         isLoading: cashesQuery.isLoading,
         isError: cashesQuery.isError,
         error: cashesQuery.error,
+    };
+};
+
+export const useChannels = () => {
+    const channelsQuery = useQuery({
+        queryKey: ['channels'],
+        queryFn: async () => {
+            const { data } = await sdGestionApi.get(`/closing-sale/channels`);
+            console.log(`API Channels:`, data.data);
+            return data.data;
+        },
+    });
+
+    const rawData = channelsQuery.data;
+    const channels = Array.isArray(rawData)
+        ? rawData
+        : (Array.isArray(rawData?.data) ? rawData.data : EMPTY_ARRAY);
+
+    return {
+        channels,
+        isLoading: channelsQuery.isLoading,
+        isError: channelsQuery.isError,
+        error: channelsQuery.error,
     };
 };
 
@@ -32,18 +62,21 @@ export const useClosingSalesInfo = (params) => {
             if (params.cash) searchParams.append('cash', params.cash);
 
             const { data } = await sdGestionApi.get(`/closing-sale/info?${searchParams.toString()}`);
-
-            console.log('Closing Sales Info', data.data)
-
-            return data.data; // Correctly extract the array from { message, data, error }
+            return data;
         },
-        enabled: !!(params.date && params.entity && params.chsannel && params.cash),
+        enabled: !!(params && params.date && params.entity && params.channel && params.cash),
     });
 
+    const rawData = infoQuery.data;
+    const info = (rawData && !Array.isArray(rawData) && typeof rawData === 'object')
+        ? (rawData.data || rawData)
+        : (rawData || EMPTY_OBJECT);
+
     return {
-        info: infoQuery.data || EMPTY_ARRAY,
+        info,
         isLoading: infoQuery.isLoading,
         isError: infoQuery.isError,
         error: infoQuery.error,
+        isFetching: infoQuery.isFetching,
     };
 };

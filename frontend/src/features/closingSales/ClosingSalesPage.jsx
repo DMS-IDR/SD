@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useCashes } from "./hooks/useClosingSales"
+import { useCashes, useClosingSalesInfo } from "./hooks/useClosingSales"
 
 const COMPANIES = [
     { id: '1', name: 'DKO' },
@@ -12,17 +12,20 @@ const COMPANIES = [
 
 export const ClosingSalesPage = () => {
 
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
     const [entity, setEntity] = useState('1')
     const [selectedChannels, setSelectedChannels] = useState(['Pos', 'Web', 'Ventas'])
     const [selectedCashes, setSelectedCashes] = useState([])
-    const [closingData, setClosingData] = useState(false)
-    const [cashDropdownOpen, setCashDropdownOpen] = useState(false)
+    const [searchParams, setSearchParams] = useState(null)
 
-    // TanStack Query Hook: Fetch cashes whenever 'entity' changes
+    // Pagination state
+    const [mpPage, setMpPage] = useState(1)
+    const [dtePage, setDtePage] = useState(1)
+    const itemsPerPage = 20
+
+    // TanStack Query Hooks
     const { cashes, isLoading: loadingCashes } = useCashes(entity)
+    const { info: closingData, isLoading: loadingInfo, isError, error: fetchError } = useClosingSalesInfo(searchParams || {})
 
     // Sync selectedCashes ONLY when new cash data is loaded from the query
     useEffect(() => {
@@ -40,9 +43,54 @@ export const ClosingSalesPage = () => {
     const deselectAllCashes = () => setSelectedCashes([])
 
     const fetchClosingData = () => {
-        setLoading(true)
-        setError(null)
+        if (!date || selectedChannels.length === 0 || selectedCashes.length === 0) {
+            alert('Por favor selecciona fecha, canales y cajas')
+            return
+        }
 
+        setSearchParams({
+            date,
+            entity,
+            channel: selectedChannels.join(','),
+            cash: selectedCashes.join(',')
+        })
+        setMpPage(1)
+        setDtePage(1)
+    }
+
+    // Pagination helpers
+    const paginateData = (data, page) => {
+        const start = (page - 1) * itemsPerPage
+        return data?.slice(start, start + itemsPerPage) || []
+    }
+
+    const getTotalPages = (data) => Math.ceil((data?.length || 0) / itemsPerPage)
+
+    const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+        if (totalPages <= 1) return null
+        return (
+            <div className="flex items-center justify-between mt-4 px-2">
+                <span className="text-sm text-slate-400">
+                    Página {currentPage} de {totalPages}
+                </span>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 bg-slate-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600"
+                    >
+                        Anterior
+                    </button>
+                    <button
+                        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 bg-slate-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600"
+                    >
+                        Siguiente
+                    </button>
+                </div>
+            </div>
+        )
     }
 
     const toggleChannel = (channel) => {
@@ -184,10 +232,10 @@ export const ClosingSalesPage = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={fetchClosingData}
-                            disabled={loading}
+                            disabled={loadingInfo}
                             className="px-4 py-2 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-emerald-700 transition-all disabled:opacity-50 flex items-center gap-2"
                         >
-                            {loading ? (
+                            {loadingInfo ? (
                                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -214,6 +262,13 @@ export const ClosingSalesPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Error Message */}
+            {isError && (
+                <div className="p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
+                    {fetchError?.message || 'Error al obtener datos de cierre'}
+                </div>
+            )}
 
             {/* Report Content */}
             {closingData && (

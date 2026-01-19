@@ -32,9 +32,12 @@ export const useClosingSalesInfo = (params) => {
             if (params.cash) searchParams.append('cash', params.cash);
 
             const { data } = await sdGestionApi.get(`/closing-sale/info?${searchParams.toString()}`);
+
+            console.log('Closing Sales Info', data.data)
+
             return data.data; // Correctly extract the array from { message, data, error }
         },
-        enabled: !!(params.date && params.entity && params.channel && params.cash),
+        enabled: !!(params.date && params.entity && params.chsannel && params.cash),
     });
 
     return {

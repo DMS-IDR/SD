@@ -1,61 +1,272 @@
-import { useEffect, useState } from "react"
-import { useCashes, useClosingSalesInfo } from "./hooks/useClosingSales"
+import { useState, useEffect, useMemo } from 'react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { useCashes, useChannels, useClosingSalesInfo } from './hooks/useClosingSales'
 
+
+// Companies list
 const COMPANIES = [
     { id: '1', name: 'DKO' },
-    { id: '2', name: 'MV' },
     { id: '3', name: 'BazarED' },
     { id: '4', name: 'Peña' },
     { id: '5', name: 'Maipu' },
-    { id: '13', name: 'PlzVesp' }
+    { id: '13', name: 'PlzVesp' },
+    { id: '15', name: 'Outlet' }
 ]
 
 export const ClosingSalesPage = () => {
-
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
     const [entity, setEntity] = useState('1')
-    const [selectedChannels, setSelectedChannels] = useState(['Pos', 'Web', 'Ventas'])
+    const [selectedChannels, setSelectedChannels] = useState([])
     const [selectedCashes, setSelectedCashes] = useState([])
-    const [searchParams, setSearchParams] = useState(null)
+    const [queryParams, setQueryParams] = useState(null)
+
+    // Hooks
+    const { channels, isLoading: loadingChannels } = useChannels(entity)
+    const { cashes, isLoading: loadingCashes } = useCashes(entity)
+    const {
+        info: closingData,
+        isLoading: loadingInfo,
+        isError,
+        error: infoError,
+        isFetching
+    } = useClosingSalesInfo(queryParams)
+
+    const loading = loadingChannels || loadingCashes || loadingInfo || isFetching
+    const error = isError ? (infoError?.message || 'Error al obtener datos') : null
 
     // Pagination state
     const [mpPage, setMpPage] = useState(1)
     const [dtePage, setDtePage] = useState(1)
     const itemsPerPage = 20
 
-    // TanStack Query Hooks
-    const { cashes, isLoading: loadingCashes } = useCashes(entity)
-    const { info: closingData, isLoading: loadingInfo, isError, error: fetchError } = useClosingSalesInfo(searchParams || {})
-
-    // Sync selectedCashes ONLY when new cash data is loaded from the query
+    // Auto-select all channels when they change
     useEffect(() => {
-        if (cashes && cashes.length > 0) {
-            const cashesNames = cashes.map(c => c.caja);
-            // Only update if the selection is different from the total available
-            // to avoid loop if this effect triggers unnecessarily
-            setSelectedCashes(cashesNames);
-        } else {
-            setSelectedCashes([]);
+        if (channels?.length > 0) {
+            setSelectedChannels(channels.map(c => c.canal))
+        }
+    }, [channels])
+
+    // Auto-select all cashes when they change
+    useEffect(() => {
+        if (cashes?.length > 0) {
+            setSelectedCashes(cashes.map(c => c.caja))
         }
     }, [cashes])
 
-    const selectAllCashes = () => setSelectedCashes(cashes.map(c => c.caja))
-    const deselectAllCashes = () => setSelectedCashes([])
+    const handleSearch = () => {
 
-    const fetchClosingData = () => {
         if (!date || selectedChannels.length === 0 || selectedCashes.length === 0) {
             alert('Por favor selecciona fecha, canales y cajas')
             return
         }
 
-        setSearchParams({
+        setMpPage(1)
+        setDtePage(1)
+        setQueryParams({
             date,
             entity,
             channel: selectedChannels.join(','),
             cash: selectedCashes.join(',')
         })
-        setMpPage(1)
-        setDtePage(1)
+    }
+
+    const toggleChannel = (channel) => {
+        setSelectedChannels(prev =>
+            prev.includes(channel) ? prev.filter(c => c !== channel) : [...prev, channel]
+        )
+    }
+
+    const toggleCash = (cash) => {
+        setSelectedCashes(prev =>
+            prev.includes(cash) ? prev.filter(c => c !== cash) : [...prev, cash]
+        )
+    }
+
+    const selectAllCashes = () => setSelectedCashes(cashes.map(c => c.caja))
+    const deselectAllCashes = () => setSelectedCashes([])
+
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0
+        }).format(value || 0)
+    }
+
+    // Calculate totals
+    const totalBruto = closingData?.totales?.reduce((sum, item) => sum + (item.monto_bruto || 0), 0) || 0
+    const totalTransactions = closingData?.totales?.reduce((sum, item) => sum + (parseInt(item.cantidad) || 0), 0) || 0
+    const totalDTE = closingData?.detalleDTE?.reduce((sum, item) => sum + (item.bruto || 0), 0) || 0
+    const totalDocumentos = closingData?.detalleDTE?.length || 0
+    const hasDifference = Math.abs(totalBruto - totalDTE) > 0.01
+
+    // Group DTE by payment method for comparison (we'll need to match with totales)
+    const getDTEByMetodo = () => {
+        const grouped = {}
+        closingData?.detalleMP?.forEach(item => {
+            const metodo = item.metodo_pago || 'Sin método'
+            if (!grouped[metodo]) grouped[metodo] = { monto: 0, cantidad: 0 }
+            grouped[metodo].monto += item.bruto || 0
+            grouped[metodo].cantidad += 1
+        })
+        return grouped
+    }
+
+    // Export to PDF using jsPDF
+    const exportToPDF = () => {
+        if (!closingData) return
+
+        try {
+            const companyName = COMPANIES.find(c => c.id === entity)?.name || entity
+            const doc = new jsPDF('portrait', 'mm', 'a4')
+
+            // Title
+            doc.setFontSize(18)
+            doc.setTextColor(40, 40, 40)
+            doc.text(`Cierre de Ventas - ${companyName}`, 14, 20)
+
+            doc.setFontSize(11)
+            doc.setTextColor(100, 100, 100)
+            doc.text(`Fecha: ${date}`, 14, 28)
+            doc.text(`Canales: ${selectedChannels.join(', ')}`, 14, 34)
+            doc.text(`Cajas: ${selectedCashes.slice(0, 5).join(', ')}${selectedCashes.length > 5 ? '...' : ''}`, 14, 40)
+
+            let yPos = 50
+
+            // Summary Cards info
+            doc.setFontSize(11)
+            doc.setTextColor(40, 40, 40)
+            doc.text(`Total: ${formatCurrency(totalBruto)}   |   Transacciones MP: ${totalTransactions}   |   Documentos DTE: ${totalDocumentos}${hasDifference ? `   |   Diferencia: ${formatCurrency(totalBruto - totalDTE)}` : ''}`, 14, yPos)
+            yPos += 10
+
+            // Resumen Comparativo
+            if (closingData.totales?.length > 0) {
+                doc.setFontSize(14)
+                doc.setTextColor(40, 40, 40)
+                doc.text('Resumen Comparativo', 14, yPos)
+                yPos += 6
+
+                const dteByMetodo = getDTEByMetodo()
+                const resumenData = closingData.totales.map(t => {
+                    const dteData = dteByMetodo[t.metodo_pago] || { monto: 0, cantidad: 0 }
+                    return [
+                        t.metodo_pago?.toUpperCase() || '-',
+                        formatCurrency(t.monto_bruto),
+                        formatCurrency(dteData.monto),
+                        (dteData.cantidad || t.cantidad).toString()
+                    ]
+                })
+                resumenData.push(['TOTAL', formatCurrency(totalBruto), formatCurrency(totalDTE), totalDocumentos.toString()])
+
+                autoTable(doc, {
+                    startY: yPos,
+                    head: [['Tipo de documento', 'Monto Pedido $', 'Monto DTE $', 'Cantidad documentos']],
+                    body: resumenData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                    styles: { fontSize: 9, cellPadding: 3 },
+                    didParseCell: (data) => {
+                        // Align amount columns to the right
+                        if (data.column.index >= 1) {
+                            data.cell.styles.halign = 'right'
+                        }
+                    }
+                })
+
+                yPos = doc.lastAutoTable.finalY + 10
+            }
+
+            // Detalle MP
+            if (closingData.detalleMP?.length > 0) {
+                if (yPos > 240) {
+                    doc.addPage()
+                    yPos = 20
+                }
+
+                doc.setFontSize(14)
+                doc.setTextColor(40, 40, 40)
+                doc.text('Detalle por Método de Pago', 14, yPos)
+                yPos += 6
+
+                const mpData = closingData.detalleMP.map(item => [
+                    item.metodo_pago || '-',
+                    item.cajero || '-',
+                    formatCurrency(item.bruto),
+                    (item.cliente || '-').substring(0, 30),
+                    item.canal,
+                    item.caja
+                ])
+
+                autoTable(doc, {
+                    startY: yPos,
+                    head: [['Método', 'Cajero', 'Monto', 'Cliente', 'Canal', 'Caja']],
+                    body: mpData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [46, 204, 113], textColor: 255 },
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    didParseCell: (data) => {
+                        if (data.column.index === 2) {
+                            data.cell.styles.halign = 'right'
+                        }
+                    }
+                })
+
+                yPos = doc.lastAutoTable.finalY + 10
+            }
+
+            // Detalle DTE
+            if (closingData.detalleDTE?.length > 0) {
+                if (yPos > 240) {
+                    doc.addPage()
+                    yPos = 20
+                }
+
+                doc.setFontSize(14)
+                doc.setTextColor(40, 40, 40)
+                doc.text('Detalle de Documentos (DTE)', 14, yPos)
+                yPos += 6
+
+                const dteData = closingData.detalleDTE.map(item => [
+                    item.t_doc || '-',
+                    item.folio || '-',
+                    item.cajero || '-',
+                    formatCurrency(item.bruto),
+                    (item.cliente || '-').substring(0, 25),
+                    item.canal,
+                    item.caja
+                ])
+
+                autoTable(doc, {
+                    startY: yPos,
+                    head: [['Documento', 'Folio', 'Cajero', 'Monto', 'Cliente', 'Canal', 'Caja']],
+                    body: dteData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [155, 89, 182], textColor: 255 },
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    didParseCell: (data) => {
+                        if (data.column.index === 3) {
+                            data.cell.styles.halign = 'right'
+                        }
+                    }
+                })
+            }
+
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages()
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i)
+                doc.setFontSize(8)
+                doc.setTextColor(150)
+                doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10)
+                doc.text(`Generado: ${new Date().toLocaleString('es-CL')}`, 14, doc.internal.pageSize.height - 10)
+            }
+
+            doc.save(`Cierre de Ventas - ${companyName} - ${date}.pdf`)
+        } catch (err) {
+            console.error('Error generating PDF:', err)
+            alert('Error al generar PDF: ' + err.message)
+        }
     }
 
     // Pagination helpers
@@ -93,50 +304,9 @@ export const ClosingSalesPage = () => {
         )
     }
 
-    const toggleChannel = (channel) => {
-        setSelectedChannels(prev =>
-            prev.includes(channel) ? prev.filter(c => c !== channel) : [...prev, channel]
-        )
-    }
-
-    const toggleCash = (cash) => {
-        setSelectedCashes(prev =>
-            prev.includes(cash) ? prev.filter(c => c !== cash) : [...prev, cash]
-        )
-    }
-
-    const formatCurrency = (value) => {
-        return new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP',
-            minimumFractionDigits: 0
-        }).format(value || 0)
-    }
-
-    // Calculate totals
-    const totalBruto = closingData?.totales?.reduce((sum, item) => sum + (item.monto_bruto || 0), 0) || 0
-    const totalTransactions = closingData?.totales?.reduce((sum, item) => sum + (parseInt(item.cantidad) || 0), 0) || 0
-    const totalDTE = closingData?.detalleDTE?.reduce((sum, item) => sum + (item.bruto || 0), 0) || 0
-    const totalDocumentos = closingData?.detalleDTE?.length || 0
-    const hasDifference = Math.abs(totalBruto - totalDTE) > 0.01
-
-    // Group DTE by payment method for comparison (we'll need to match with totales)
-    const getDTEByMetodo = () => {
-        const grouped = {}
-        closingData?.detalleMP?.forEach(item => {
-            const metodo = item.metodo_pago || 'Sin método'
-            if (!grouped[metodo]) grouped[metodo] = { monto: 0, cantidad: 0 }
-            grouped[metodo].monto += item.bruto || 0
-            grouped[metodo].cantidad += 1
-        })
-        return grouped
-    }
-
-    const exportToPDF = () => { }
-
     return (
         <div className="max-w-7xl mx-auto p-4 sm:p-6">
-            {/* Header titulo y subtitulo */}
+            {/* Header */}
             <div className="mb-6">
                 <h2 className="text-3xl font-bold text-white mb-2">
                     Cierre de Ventas
@@ -144,8 +314,7 @@ export const ClosingSalesPage = () => {
                 <p className="text-slate-400 mt-2">Consulta el cierre diario de cajas y ventas</p>
             </div>
 
-            {/* Filtros */}
-
+            {/* Compact Filters */}
             <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 p-4 mb-6">
                 <div className="flex items-end justify-between gap-4">
                     {/* Left side - Filters */}
@@ -179,18 +348,30 @@ export const ClosingSalesPage = () => {
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1">Canales</label>
                             <div className="flex gap-1">
-                                {['Pos', 'Web', 'Ventas'].map(ch => (
-                                    <button
-                                        key={ch}
-                                        onClick={() => toggleChannel(ch)}
-                                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedChannels.includes(ch)
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                                            }`}
-                                    >
-                                        {ch}
-                                    </button>
-                                ))}
+                                {loadingChannels ? (
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 rounded border border-slate-700/50">
+                                        <svg className="animate-spin h-3 w-3 text-blue-400" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        <span className="text-xs text-slate-400">Cargando canales...</span>
+                                    </div>
+                                ) : channels.length > 0 ? (
+                                    channels.map(c => (
+                                        <button
+                                            key={c.canal}
+                                            onClick={() => toggleChannel(c.canal)}
+                                            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedChannels.includes(c.canal)
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                                }`}
+                                        >
+                                            {c.canal}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <span className="text-xs text-slate-500 italic px-2 py-1.5">Sin canales</span>
+                                )}
                             </div>
                         </div>
 
@@ -198,13 +379,21 @@ export const ClosingSalesPage = () => {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <label className="text-xs font-medium text-slate-400">Cajas</label>
-                                <button onClick={selectAllCashes} className="text-xs text-blue-400 hover:underline">Todas</button>
-                                <button onClick={deselectAllCashes} className="text-xs text-slate-500 hover:underline">Ninguna</button>
+                                {!loadingCashes && cashes.length > 0 && (
+                                    <>
+                                        <button onClick={selectAllCashes} className="text-xs text-blue-400 hover:underline">Todas</button>
+                                        <button onClick={deselectAllCashes} className="text-xs text-slate-500 hover:underline">Ninguna</button>
+                                    </>
+                                )}
                             </div>
                             <div className="flex flex-wrap gap-1">
                                 {loadingCashes ? (
-                                    <div className="px-2 py-1 rounded text-xs font-medium bg-slate-700/50 text-slate-400 animate-pulse">
-                                        Cargando cajas...
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 rounded border border-slate-700/50">
+                                        <svg className="animate-spin h-3 w-3 text-emerald-400" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        <span className="text-xs text-slate-400">Cargando cajas...</span>
                                     </div>
                                 ) : cashes.length > 0 ? (
                                     cashes.map(c => (
@@ -220,9 +409,7 @@ export const ClosingSalesPage = () => {
                                         </button>
                                     ))
                                 ) : (
-                                    <div className="px-2 py-1 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                                        Sin cajas disponibles
-                                    </div>
+                                    <span className="text-xs text-slate-500 italic px-2 py-1">Sin cajas</span>
                                 )}
                             </div>
                         </div>
@@ -231,11 +418,11 @@ export const ClosingSalesPage = () => {
                     {/* Right side - Buttons */}
                     <div className="flex gap-2">
                         <button
-                            onClick={fetchClosingData}
-                            disabled={loadingInfo}
+                            onClick={handleSearch}
+                            disabled={loading}
                             className="px-4 py-2 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-emerald-700 transition-all disabled:opacity-50 flex items-center gap-2"
                         >
-                            {loadingInfo ? (
+                            {loading ? (
                                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -264,9 +451,9 @@ export const ClosingSalesPage = () => {
             </div>
 
             {/* Error Message */}
-            {isError && (
+            {error && (
                 <div className="p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
-                    {fetchError?.message || 'Error al obtener datos de cierre'}
+                    {error}
                 </div>
             )}
 
@@ -449,11 +636,6 @@ export const ClosingSalesPage = () => {
                         )}
                 </div>
             )}
-
-
-
-
         </div>
-
     )
 }
